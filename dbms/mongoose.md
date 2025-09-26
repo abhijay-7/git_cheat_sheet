@@ -1,35 +1,27 @@
 # MongoDB/Mongoose Complete Cheat Sheet
 
 ## Folder Structure:
+```markdown
 project/
-│
-├─ src/
-│   ├─ config/
-│   │   └─ db.js             # MongoDB connection
-│   │
-│   ├─ models/               # Mongoose schemas & models
-│   │   ├─ User.js
-│   │   └─ Post.js
-│   │
-│   ├─ controllers/          # Business logic, interact with models
-│   │   ├─ userController.js
-│   │   └─ postController.js
-│   │
-│   ├─ routes/               # Express routes
-│   │   ├─ userRoutes.js
-│   │   └─ postRoutes.js
-│   │
-│   ├─ middlewares/          # Auth, logging, error handling
-│   │
-│   ├─ utils/                # Helper functions
-│   │
-│   └─ app.js                # Express app initialization
-│
-├─ server.js                 # Entry point: starts server
-└─ package.json
-
+├── server.js               # Entry point: starts server
+├── package.json
+└── src/
+    ├── app.js              # Express app initialization
+    ├── config/
+    │   └── db.js           # MongoDB connection
+    ├── models/             # Mongoose schemas & models
+    │   ├── User.js
+    │   └── Post.js
+    ├── controllers/        # Business logic, interact with models
+    │   ├── userController.js
+    │   └── postController.js
+    ├── routes/             # Express routes
+    │   ├── userRoutes.js
+    │   └── postRoutes.js
+    ├── middlewares/        # Auth, logging, error handling
+    └── utils/              # Helper functions
+```
 ---
-
 ## Table of Contents
 1. [Basic Setup](#basic-setup)
 2. [Schema & Models](#schema--models)
