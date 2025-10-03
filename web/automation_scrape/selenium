@@ -1,0 +1,1877 @@
+# Selenium & Selenium-Wire Complete Cheatsheet
+
+## Table of Contents
+- [Installation](#installation)
+- [WebDriver Setup](#webdriver-setup)
+- [Locating Elements](#locating-elements)
+- [Browser Interactions](#browser-interactions)
+- [Element Interactions](#element-interactions)
+- [Waits & Synchronization](#waits--synchronization)
+- [Browser Navigation](#browser-navigation)
+- [Windows & Frames](#windows--frames)
+- [JavaScript Execution](#javascript-execution)
+- [Cookies Management](#cookies-management)
+- [Screenshots & Recording](#screenshots--recording)
+- [Alerts & Popups](#alerts--popups)
+- [Action Chains](#action-chains)
+- [Select Dropdown](#select-dropdown)
+- [WebDriver Configuration](#webdriver-configuration)
+- [Selenium-Wire](#selenium-wire)
+- [Advanced Patterns](#advanced-patterns)
+- [Best Practices](#best-practices)
+
+---
+
+## Installation
+
+```bash
+# Basic Selenium
+pip install selenium
+
+# Selenium Wire (intercept network requests)
+pip install selenium-wire
+
+# WebDriver Manager (automatic driver management)
+pip install webdriver-manager
+
+# Optional: Undetected ChromeDriver (bypass bot detection)
+pip install undetected-chromedriver
+```
+
+---
+
+## WebDriver Setup
+
+### Chrome
+
+```python
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+
+# Basic setup
+driver = webdriver.Chrome()
+
+# With WebDriver Manager
+driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+
+# With options
+options = Options()
+options.add_argument('--headless')  # Run in background
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
+options.add_argument('--start-maximized')
+options.add_argument('--disable-blink-features=AutomationControlled')
+options.add_experimental_option('excludeSwitches', ['enable-logging'])
+options.add_experimental_option('excludeSwitches', ['enable-automation'])
+options.add_experimental_option('useAutomationExtension', False)
+
+driver = webdriver.Chrome(options=options)
+```
+
+### Firefox
+
+```python
+from selenium.webdriver.firefox.service import Service
+from selenium.webdriver.firefox.options import Options
+from webdriver_manager.firefox import GeckoDriverManager
+
+options = Options()
+options.add_argument('--headless')
+options.set_preference('dom.webdriver.enabled', False)
+options.set_preference('useAutomationExtension', False)
+
+driver = webdriver.Firefox(
+    service=Service(GeckoDriverManager().install()),
+    options=options
+)
+```
+
+### Edge
+
+```python
+from selenium.webdriver.edge.service import Service
+from selenium.webdriver.edge.options import Options
+from webdriver_manager.microsoft import EdgeChromiumDriverManager
+
+options = Options()
+options.add_argument('--headless')
+
+driver = webdriver.Edge(
+    service=Service(EdgeChromiumDriverManager().install()),
+    options=options
+)
+```
+
+### Safari
+
+```python
+driver = webdriver.Safari()
+# Note: Safari driver comes pre-installed on macOS
+# Enable: safaridriver --enable
+```
+
+---
+
+## Locating Elements
+
+### Find Methods
+
+```python
+from selenium.webdriver.common.by import By
+
+# Find single element (returns WebElement or raises NoSuchElementException)
+element = driver.find_element(By.ID, 'element_id')
+element = driver.find_element(By.NAME, 'element_name')
+element = driver.find_element(By.CLASS_NAME, 'class_name')
+element = driver.find_element(By.TAG_NAME, 'div')
+element = driver.find_element(By.CSS_SELECTOR, 'div.class')
+element = driver.find_element(By.XPATH, '//div[@id="test"]')
+element = driver.find_element(By.LINK_TEXT, 'Click Here')
+element = driver.find_element(By.PARTIAL_LINK_TEXT, 'Click')
+
+# Find multiple elements (returns list, empty if none found)
+elements = driver.find_elements(By.CLASS_NAME, 'item')
+elements = driver.find_elements(By.TAG_NAME, 'a')
+elements = driver.find_elements(By.CSS_SELECTOR, 'ul > li')
+elements = driver.find_elements(By.XPATH, '//div[@class="container"]//p')
+
+# Find element within element
+parent = driver.find_element(By.ID, 'parent')
+child = parent.find_element(By.CLASS_NAME, 'child')
+children = parent.find_elements(By.TAG_NAME, 'span')
+```
+
+### By Type Reference
+
+| By Type | Example | Description |
+|---------|---------|-------------|
+| `By.ID` | `'submit-btn'` | Match id attribute |
+| `By.NAME` | `'username'` | Match name attribute |
+| `By.CLASS_NAME` | `'btn-primary'` | Match class (single class only) |
+| `By.TAG_NAME` | `'button'` | Match HTML tag |
+| `By.CSS_SELECTOR` | `'input[type="text"]'` | CSS selector |
+| `By.XPATH` | `'//button[@id="submit"]'` | XPath expression |
+| `By.LINK_TEXT` | `'Click here'` | Exact link text |
+| `By.PARTIAL_LINK_TEXT` | `'Click'` | Partial link text |
+
+---
+
+## Browser Interactions
+
+### Navigation
+
+```python
+# Open URL
+driver.get('https://example.com')
+
+# Get current URL
+current_url = driver.current_url
+
+# Get page title
+title = driver.title
+
+# Get page source
+source = driver.page_source
+
+# Navigate back
+driver.back()
+
+# Navigate forward
+driver.forward()
+
+# Refresh page
+driver.refresh()
+
+# Close current window
+driver.close()
+
+# Quit browser (close all windows)
+driver.quit()
+```
+
+### Window Management
+
+```python
+# Get window size
+size = driver.get_window_size()
+width = size['width']
+height = size['height']
+
+# Set window size
+driver.set_window_size(1920, 1080)
+
+# Get window position
+position = driver.get_window_position()
+x = position['x']
+y = position['y']
+
+# Set window position
+driver.set_window_position(0, 0)
+
+# Maximize window
+driver.maximize_window()
+
+# Minimize window
+driver.minimize_window()
+
+# Fullscreen
+driver.fullscreen_window()
+
+# Get window handle (ID)
+current_handle = driver.current_window_handle
+
+# Get all window handles
+all_handles = driver.window_handles
+```
+
+---
+
+## Element Interactions
+
+### Basic Operations
+
+```python
+# Click element
+element.click()
+
+# Send text to input
+element.send_keys('Hello World')
+
+# Clear input field
+element.clear()
+
+# Submit form
+element.submit()
+```
+
+### Special Keys
+
+```python
+from selenium.webdriver.common.keys import Keys
+
+# Send special keys
+element.send_keys(Keys.RETURN)  # Enter
+element.send_keys(Keys.TAB)
+element.send_keys(Keys.ESCAPE)
+element.send_keys(Keys.BACKSPACE)
+element.send_keys(Keys.DELETE)
+element.send_keys(Keys.SPACE)
+element.send_keys(Keys.ARROW_UP)
+element.send_keys(Keys.ARROW_DOWN)
+element.send_keys(Keys.ARROW_LEFT)
+element.send_keys(Keys.ARROW_RIGHT)
+element.send_keys(Keys.HOME)
+element.send_keys(Keys.END)
+element.send_keys(Keys.PAGE_UP)
+element.send_keys(Keys.PAGE_DOWN)
+
+# Modifiers
+element.send_keys(Keys.CONTROL, 'a')  # Ctrl+A
+element.send_keys(Keys.CONTROL, 'c')  # Ctrl+C
+element.send_keys(Keys.CONTROL, 'v')  # Ctrl+V
+element.send_keys(Keys.SHIFT, Keys.ARROW_RIGHT)  # Shift+Right
+
+# Function keys
+element.send_keys(Keys.F1)
+element.send_keys(Keys.F12)
+
+# Chord (multiple keys simultaneously)
+from selenium.webdriver.common.keys import Keys
+element.send_keys(Keys.chord(Keys.CONTROL, 'a'))
+```
+
+### Element Properties
+
+```python
+# Get attribute value
+value = element.get_attribute('href')
+class_name = element.get_attribute('class')
+data_attr = element.get_attribute('data-id')
+
+# Get DOM property
+value = element.get_property('value')
+checked = element.get_property('checked')
+
+# Get text content
+text = element.text
+
+# Get tag name
+tag = element.tag_name
+
+# Check if displayed
+is_visible = element.is_displayed()
+
+# Check if enabled
+is_enabled = element.is_enabled()
+
+# Check if selected (checkboxes, radio buttons)
+is_selected = element.is_selected()
+
+# Get CSS value
+color = element.value_of_css_property('color')
+font_size = element.value_of_css_property('font-size')
+
+# Get element location
+location = element.location  # {'x': 100, 'y': 200}
+x = element.location['x']
+y = element.location['y']
+
+# Get element size
+size = element.size  # {'width': 300, 'height': 50}
+
+# Get element rectangle (location + size)
+rect = element.rect  # {'x': 100, 'y': 200, 'width': 300, 'height': 50}
+
+# Get screenshot of element
+element.screenshot('element.png')
+png_data = element.screenshot_as_png
+base64_data = element.screenshot_as_base64
+```
+
+---
+
+## Waits & Synchronization
+
+### Implicit Wait
+
+```python
+# Wait up to 10 seconds for elements to appear
+driver.implicitly_wait(10)
+
+# Set to 0 to disable
+driver.implicitly_wait(0)
+```
+
+### Explicit Wait
+
+```python
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+
+# Create wait object
+wait = WebDriverWait(driver, timeout=10)
+
+# Wait for element to be present
+element = wait.until(EC.presence_of_element_located((By.ID, 'myid')))
+
+# Wait for element to be visible
+element = wait.until(EC.visibility_of_element_located((By.CLASS_NAME, 'visible')))
+
+# Wait for element to be clickable
+element = wait.until(EC.element_to_be_clickable((By.ID, 'button')))
+
+# Wait with custom timeout and poll frequency
+wait = WebDriverWait(driver, timeout=20, poll_frequency=0.5)
+
+# Wait until condition is False
+wait.until_not(EC.presence_of_element_located((By.ID, 'loading')))
+
+# Custom wait condition
+def element_has_text(locator, text):
+    def _predicate(driver):
+        element = driver.find_element(*locator)
+        return text in element.text
+    return _predicate
+
+wait.until(element_has_text((By.ID, 'status'), 'Complete'))
+```
+
+### Expected Conditions
+
+```python
+from selenium.webdriver.support import expected_conditions as EC
+
+# Element presence/visibility
+EC.presence_of_element_located((By.ID, 'id'))
+EC.visibility_of_element_located((By.ID, 'id'))
+EC.visibility_of(element)
+EC.presence_of_all_elements_located((By.CLASS_NAME, 'class'))
+EC.visibility_of_any_elements_located((By.CLASS_NAME, 'class'))
+EC.visibility_of_all_elements_located((By.CLASS_NAME, 'class'))
+
+# Element state
+EC.element_to_be_clickable((By.ID, 'id'))
+EC.element_to_be_selected(element)
+EC.element_located_to_be_selected((By.ID, 'id'))
+EC.element_selection_state_to_be(element, True)
+EC.element_located_selection_state_to_be((By.ID, 'id'), True)
+
+# Text conditions
+EC.text_to_be_present_in_element((By.ID, 'id'), 'text')
+EC.text_to_be_present_in_element_value((By.ID, 'id'), 'value')
+EC.text_to_be_present_in_element_attribute((By.ID, 'id'), 'attribute', 'value')
+
+# Element disappearance
+EC.invisibility_of_element_located((By.ID, 'id'))
+EC.invisibility_of_element(element)
+EC.staleness_of(element)
+
+# Frame conditions
+EC.frame_to_be_available_and_switch_to_it((By.ID, 'iframe'))
+EC.frame_to_be_available_and_switch_to_it('frame_name')
+EC.frame_to_be_available_and_switch_to_it(0)
+
+# Window conditions
+EC.new_window_is_opened(handles_before)
+EC.number_of_windows_to_be(2)
+
+# Alert conditions
+EC.alert_is_present()
+
+# URL conditions
+EC.url_to_be('https://example.com')
+EC.url_contains('example')
+EC.url_changes('https://old-url.com')
+EC.url_matches(r'https://.*\.com')
+
+# Title conditions
+EC.title_is('Page Title')
+EC.title_contains('Title')
+
+# Attribute conditions
+EC.element_attribute_to_include((By.ID, 'id'), 'attribute')
+
+# Combined conditions
+EC.all_of(condition1, condition2, condition3)
+EC.any_of(condition1, condition2, condition3)
+EC.none_of(condition1, condition2)
+```
+
+### Sleep (Use Sparingly)
+
+```python
+import time
+
+# Hard wait (not recommended for production)
+time.sleep(2)  # Wait 2 seconds
+```
+
+---
+
+## Browser Navigation
+
+### Switching Windows/Tabs
+
+```python
+# Get current window handle
+main_window = driver.current_window_handle
+
+# Open new tab
+driver.switch_to.new_window('tab')
+
+# Open new window
+driver.switch_to.new_window('window')
+
+# Get all window handles
+all_windows = driver.window_handles
+
+# Switch to window by handle
+driver.switch_to.window(all_windows[1])
+
+# Switch back to main window
+driver.switch_to.window(main_window)
+
+# Switch to last opened window
+driver.switch_to.window(driver.window_handles[-1])
+
+# Close current window and switch back
+driver.close()
+driver.switch_to.window(main_window)
+```
+
+### Frames/IFrames
+
+```python
+# Switch to frame by index
+driver.switch_to.frame(0)
+
+# Switch to frame by name or ID
+driver.switch_to.frame('frame_name')
+
+# Switch to frame by WebElement
+iframe = driver.find_element(By.TAG_NAME, 'iframe')
+driver.switch_to.frame(iframe)
+
+# Switch to parent frame
+driver.switch_to.parent_frame()
+
+# Switch to default content (main page)
+driver.switch_to.default_content()
+```
+
+---
+
+## JavaScript Execution
+
+### Execute Script
+
+```python
+# Execute JavaScript
+driver.execute_script('alert("Hello World");')
+
+# Execute with return value
+result = driver.execute_script('return document.title;')
+
+# Pass arguments to script
+element = driver.find_element(By.ID, 'myid')
+driver.execute_script('arguments[0].style.border = "3px solid red";', element)
+
+# Return element from JavaScript
+element = driver.execute_script('return document.getElementById("myid");')
+
+# Multiple arguments
+driver.execute_script('arguments[0].value = arguments[1];', element, 'new value')
+
+# Scroll to element
+driver.execute_script('arguments[0].scrollIntoView(true);', element)
+
+# Scroll to bottom of page
+driver.execute_script('window.scrollTo(0, document.body.scrollHeight);')
+
+# Scroll to top
+driver.execute_script('window.scrollTo(0, 0);')
+
+# Scroll by pixels
+driver.execute_script('window.scrollBy(0, 500);')
+
+# Click element using JavaScript
+driver.execute_script('arguments[0].click();', element)
+
+# Get element attribute
+value = driver.execute_script('return arguments[0].getAttribute("data-value");', element)
+
+# Remove element
+driver.execute_script('arguments[0].remove();', element)
+
+# Modify DOM
+driver.execute_script('document.body.style.backgroundColor = "lightblue";')
+
+# Wait for page to load completely
+driver.execute_script('return document.readyState') == 'complete'
+```
+
+### Async Script Execution
+
+```python
+# Set script timeout
+driver.set_script_timeout(30)
+
+# Execute async script
+result = driver.execute_async_script('''
+    var callback = arguments[arguments.length - 1];
+    setTimeout(function() {
+        callback('done');
+    }, 2000);
+''')
+```
+
+---
+
+## Cookies Management
+
+```python
+# Get all cookies
+all_cookies = driver.get_cookies()
+
+# Get specific cookie
+cookie = driver.get_cookie('session_id')
+
+# Add cookie
+driver.add_cookie({
+    'name': 'test_cookie',
+    'value': 'test_value',
+    'path': '/',
+    'domain': 'example.com',
+    'secure': True,
+    'httpOnly': False,
+    'expiry': 1735689600  # Unix timestamp
+})
+
+# Delete specific cookie
+driver.delete_cookie('cookie_name')
+
+# Delete all cookies
+driver.delete_all_cookies()
+
+# Example: Load cookies from file
+import pickle
+
+# Save cookies
+pickle.dump(driver.get_cookies(), open('cookies.pkl', 'wb'))
+
+# Load cookies
+driver.get('https://example.com')
+cookies = pickle.load(open('cookies.pkl', 'rb'))
+for cookie in cookies:
+    driver.add_cookie(cookie)
+driver.refresh()
+```
+
+---
+
+## Screenshots & Recording
+
+### Screenshots
+
+```python
+# Full page screenshot
+driver.save_screenshot('screenshot.png')
+
+# Get screenshot as bytes
+png_bytes = driver.get_screenshot_as_png()
+
+# Get screenshot as base64
+base64_data = driver.get_screenshot_as_base64()
+
+# Element screenshot
+element = driver.find_element(By.ID, 'myid')
+element.screenshot('element.png')
+
+# Save to file object
+with open('screenshot.png', 'wb') as f:
+    f.write(driver.get_screenshot_as_png())
+```
+
+### Page Source
+
+```python
+# Get HTML source
+html = driver.page_source
+
+# Save to file
+with open('page.html', 'w', encoding='utf-8') as f:
+    f.write(driver.page_source)
+```
+
+---
+
+## Alerts & Popups
+
+```python
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+# Wait for alert to be present
+wait = WebDriverWait(driver, 10)
+alert = wait.until(EC.alert_is_present())
+
+# Switch to alert
+alert = driver.switch_to.alert
+
+# Get alert text
+text = alert.text
+
+# Accept alert (click OK)
+alert.accept()
+
+# Dismiss alert (click Cancel)
+alert.dismiss()
+
+# Send text to prompt
+alert.send_keys('input text')
+
+# Example: Handle alert safely
+try:
+    alert = driver.switch_to.alert
+    print(f"Alert text: {alert.text}")
+    alert.accept()
+except:
+    print("No alert present")
+```
+
+---
+
+## Action Chains
+
+### Basic Actions
+
+```python
+from selenium.webdriver.common.action_chains import ActionChains
+
+actions = ActionChains(driver)
+
+# Click element
+actions.click(element).perform()
+
+# Double click
+actions.double_click(element).perform()
+
+# Right click (context menu)
+actions.context_click(element).perform()
+
+# Click and hold
+actions.click_and_hold(element).perform()
+
+# Release mouse button
+actions.release(element).perform()
+
+# Move to element
+actions.move_to_element(element).perform()
+
+# Move to element with offset
+actions.move_to_element_with_offset(element, 10, 20).perform()
+
+# Move by offset
+actions.move_by_offset(100, 200).perform()
+```
+
+### Drag and Drop
+
+```python
+# Drag and drop
+source = driver.find_element(By.ID, 'source')
+target = driver.find_element(By.ID, 'target')
+actions.drag_and_drop(source, target).perform()
+
+# Drag and drop by offset
+actions.drag_and_drop_by_offset(source, 100, 200).perform()
+
+# Manual drag and drop
+actions.click_and_hold(source)\
+    .move_to_element(target)\
+    .release()\
+    .perform()
+```
+
+### Keyboard Actions
+
+```python
+from selenium.webdriver.common.keys import Keys
+
+# Key down and up
+actions.key_down(Keys.CONTROL).perform()
+actions.key_up(Keys.CONTROL).perform()
+
+# Send keys
+actions.send_keys('hello').perform()
+
+# Send keys to specific element
+actions.send_keys_to_element(element, 'text').perform()
+
+# Complex key combination
+actions.key_down(Keys.CONTROL)\
+    .send_keys('a')\
+    .key_up(Keys.CONTROL)\
+    .perform()
+```
+
+### Chain Multiple Actions
+
+```python
+# Chain multiple actions
+actions.move_to_element(element1)\
+    .click()\
+    .move_to_element(element2)\
+    .click()\
+    .send_keys('test')\
+    .perform()
+
+# Pause between actions
+actions.move_to_element(element)\
+    .pause(1)\
+    .click()\
+    .perform()
+
+# Reset actions
+actions.reset_actions()
+```
+
+### Hover
+
+```python
+# Hover over element
+element = driver.find_element(By.ID, 'menu')
+actions.move_to_element(element).perform()
+
+# Wait after hover
+actions.move_to_element(element).pause(1).perform()
+```
+
+---
+
+## Select Dropdown
+
+```python
+from selenium.webdriver.support.ui import Select
+
+# Get select element
+select_element = driver.find_element(By.ID, 'dropdown')
+select = Select(select_element)
+
+# Select by visible text
+select.select_by_visible_text('Option 1')
+
+# Select by value attribute
+select.select_by_value('option1')
+
+# Select by index (0-based)
+select.select_by_index(0)
+
+# Get all options
+all_options = select.options
+for option in all_options:
+    print(option.text)
+
+# Get selected option(s)
+selected = select.first_selected_option
+print(selected.text)
+
+# For multi-select
+all_selected = select.all_selected_options
+
+# Deselect (multi-select only)
+select.deselect_all()
+select.deselect_by_visible_text('Option 1')
+select.deselect_by_value('option1')
+select.deselect_by_index(0)
+
+# Check if multi-select
+is_multiple = select.is_multiple
+```
+
+---
+
+## WebDriver Configuration
+
+### Chrome Options
+
+```python
+from selenium.webdriver.chrome.options import Options
+
+options = Options()
+
+# Window options
+options.add_argument('--headless')  # Headless mode
+options.add_argument('--start-maximized')
+options.add_argument('--window-size=1920,1080')
+options.add_argument('--window-position=0,0')
+options.add_argument('--kiosk')  # Fullscreen kiosk mode
+
+# Performance options
+options.add_argument('--disable-gpu')
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
+options.add_argument('--disable-extensions')
+options.add_argument('--disable-logging')
+options.add_argument('--disable-notifications')
+options.add_argument('--disable-popup-blocking')
+
+# Privacy options
+options.add_argument('--incognito')
+options.add_argument('--disable-blink-features=AutomationControlled')
+
+# User agent
+options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
+
+# Proxy
+options.add_argument('--proxy-server=http://proxy:port')
+
+# Language
+options.add_argument('--lang=en-US')
+
+# Disable images (faster)
+prefs = {'profile.managed_default_content_settings.images': 2}
+options.add_experimental_option('prefs', prefs)
+
+# Download directory
+prefs = {'download.default_directory': '/path/to/download'}
+options.add_experimental_option('prefs', prefs)
+
+# Exclude automation flags
+options.add_experimental_option('excludeSwitches', ['enable-automation'])
+options.add_experimental_option('useAutomationExtension', False)
+
+# Mobile emulation
+mobile_emulation = {
+    'deviceName': 'iPhone 12 Pro'
+}
+options.add_experimental_option('mobileEmulation', mobile_emulation)
+
+# Custom device metrics
+mobile_emulation = {
+    'deviceMetrics': {'width': 375, 'height': 812, 'pixelRatio': 3.0},
+    'userAgent': 'Mozilla/5.0...'
+}
+options.add_experimental_option('mobileEmulation', mobile_emulation)
+
+# Set binary location
+options.binary_location = '/path/to/chrome'
+
+# Add extension
+options.add_extension('/path/to/extension.crx')
+
+# Enable logging
+options.set_capability('goog:loggingPrefs', {'browser': 'ALL'})
+```
+
+### Firefox Options
+
+```python
+from selenium.webdriver.firefox.options import Options
+
+options = Options()
+
+options.add_argument('--headless')
+options.add_argument('--width=1920')
+options.add_argument('--height=1080')
+
+# Preferences
+options.set_preference('dom.webdriver.enabled', False)
+options.set_preference('useAutomationExtension', False)
+options.set_preference('general.useragent.override', 'user-agent-string')
+options.set_preference('network.proxy.type', 1)
+options.set_preference('network.proxy.http', 'proxy')
+options.set_preference('network.proxy.http_port', 8080)
+
+# Download directory
+options.set_preference('browser.download.dir', '/path/to/download')
+options.set_preference('browser.download.folderList', 2)
+options.set_preference('browser.helperApps.neverAsk.saveToDisk', 'application/pdf')
+
+# Set binary
+options.binary_location = '/path/to/firefox'
+
+# Profile
+from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
+profile = FirefoxProfile('/path/to/profile')
+options.profile = profile
+```
+
+### Capabilities
+
+```python
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+
+# Chrome capabilities
+caps = DesiredCapabilities.CHROME.copy()
+caps['acceptInsecureCerts'] = True
+caps['pageLoadStrategy'] = 'eager'  # or 'normal' or 'none'
+
+driver = webdriver.Chrome(desired_capabilities=caps)
+
+# Enable performance logging
+caps['goog:loggingPrefs'] = {'performance': 'ALL'}
+```
+
+---
+
+## Selenium-Wire
+
+Selenium-Wire extends Selenium to intercept and modify browser requests/responses.
+
+### Setup
+
+```python
+from seleniumwire import webdriver
+
+# Basic setup
+driver = webdriver.Chrome()
+
+# With options
+from selenium.webdriver.chrome.options import Options
+
+options = Options()
+options.add_argument('--headless')
+
+driver = webdriver.Chrome(options=options)
+
+# With proxy
+seleniumwire_options = {
+    'proxy': {
+        'http': 'http://user:pass@proxy:port',
+        'https': 'https://user:pass@proxy:port',
+        'no_proxy': 'localhost,127.0.0.1'
+    }
+}
+
+driver = webdriver.Chrome(seleniumwire_options=seleniumwire_options)
+```
+
+### Intercepting Requests
+
+```python
+# Access requests
+driver.get('https://example.com')
+
+# Get all requests
+for request in driver.requests:
+    if request.response:
+        print(f"{request.method} {request.url}")
+        print(f"Status: {request.response.status_code}")
+        print(f"Headers: {request.response.headers}")
+
+# Get last request
+last_request = driver.last_request
+
+# Filter requests by URL
+for request in driver.requests:
+    if 'api.example.com' in request.url:
+        print(request.url)
+        print(request.response.body)
+
+# Clear request history
+del driver.requests
+
+# Wait for specific request
+from seleniumwire.utils import decode
+
+def wait_for_request(driver, url_pattern, timeout=10):
+    import time
+    start = time.time()
+    while time.time() - start < timeout:
+        for request in driver.requests:
+            if url_pattern in request.url:
+                return request
+        time.sleep(0.1)
+    return None
+
+request = wait_for_request(driver, '/api/data')
+```
+
+### Request Details
+
+```python
+request = driver.last_request
+
+# Request properties
+url = request.url
+method = request.method  # GET, POST, etc.
+headers = request.headers
+body = request.body
+params = request.params
+date = request.date
+
+# Response properties
+if request.response:
+    status = request.response.status_code
+    reason = request.response.reason
+    headers = request.response.headers
+    body = request.response.body
+    
+    # Decode response body
+    from seleniumwire.utils import decode
+    decoded_body = decode(
+        request.response.body,
+        request.response.headers.get('Content-Encoding', 'identity')
+    )
+    
+    # Parse JSON response
+    import json
+    if 'application/json' in request.response.headers.get('Content-Type', ''):
+        data = json.loads(decoded_body)
+```
+
+### Modifying Requests
+
+```python
+# Request interceptor
+def interceptor(request):
+    # Modify headers
+    request.headers['User-Agent'] = 'Custom User Agent'
+    request.headers['Custom-Header'] = 'Value'
+    
+    # Delete header
+    del request.headers['Referer']
+    
+    # Modify URL
+    if 'old-domain.com' in request.url:
+        request.url = request.url.replace('old-domain.com', 'new-domain.com')
+    
+    # Block request
+    if 'analytics.com' in request.url:
+        request.abort()
+    
+    # Modify POST data
+    if request.method == 'POST':
+        import json
+        body = json.loads(request.body.decode('utf-8'))
+        body['modified'] = True
+        request.body = json.dumps(body).encode('utf-8')
+        request.headers['Content-Length'] = str(len(request.body))
+
+driver.request_interceptor = interceptor
+
+# Remove interceptor
+del driver.request_interceptor
+```
+
+### Modifying Responses
+
+```python
+# Response interceptor
+def response_interceptor(request, response):
+    from seleniumwire.utils import decode, encode
+    
+    # Decode response
+    body = decode(response.body, response.headers.get('Content-Encoding', 'identity'))
+    
+    # Modify response
+    if 'application/json' in response.headers.get('Content-Type', ''):
+        import json
+        data = json.loads(body)
+        data['modified'] = True
+        body = json.dumps(data)
+    
+    # Modify status code
+    response.status_code = 200
+    
+    # Modify headers
+    response.headers['Custom-Header'] = 'Modified'
+    
+    # Encode response back
+    response.body = encode(body, response.headers.get('Content-Encoding', 'identity'))
+
+driver.response_interceptor = response_interceptor
+
+# Remove interceptor
+del driver.response_interceptor
+```
+
+### Scopes
+
+```python
+# Set scope to reduce memory usage
+driver.scopes = [
+    '.*example\.com.*',  # Only capture requests to example.com
+    '.*api\..*'  # Only capture API requests
+]
+
+# Reset scope
+driver.scopes = []
+```
+
+### Headers & Authentication
+
+```python
+# Set global headers for all requests
+driver.header_overrides = {
+    'User-Agent': 'Custom User Agent',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Custom-Header': 'Value'
+}
+
+# Remove header overrides
+del driver.header_overrides
+
+# Basic authentication
+seleniumwire_options = {
+    'proxy': {
+        'http': 'http://username:password@proxy:8080',
+        'https': 'https://username:password@proxy:8080'
+    }
+}
+```
+
+### SSL/TLS Options
+
+```python
+seleniumwire_options = {
+    'disable_encoding': True,  # Don't decode response bodies
+    'verify_ssl': False,  # Disable SSL verification
+    'ca_cert': '/path/to/ca.crt',  # Custom CA certificate
+    'ca_key': '/path/to/ca.key'  # Custom CA key
+}
+
+driver = webdriver.Chrome(seleniumwire_options=seleniumwire_options)
+```
+
+### Advanced Configuration
+
+```python
+seleniumwire_options = {
+    'addr': '127.0.0.1',  # Proxy address
+    'port': 8888,  # Proxy port
+    'auto_config': False,  # Manual proxy configuration
+    'disable_capture': False,  # Enable/disable request capture
+    'suppress_connection_errors': True,  # Suppress errors
+    'request_storage_base_dir': '/tmp/selenium_wire',  # Storage directory
+    'exclude_hosts': ['google-analytics.com', 'facebook.com']  # Exclude hosts
+}
+
+driver = webdriver.Chrome(seleniumwire_options=seleniumwire_options)
+```
+
+### Working with HAR (HTTP Archive)
+
+```python
+# Export HAR
+import json
+
+har = driver.har
+
+# Save to file
+with open('requests.har', 'w') as f:
+    json.dump(har, f, indent=2)
+
+# Access HAR entries
+for entry in har['log']['entries']:
+    request = entry['request']
+    response = entry['response']
+    print(f"{request['method']} {request['url']} - {response['status']}")
+```
+
+---
+
+## Advanced Patterns
+
+### Page Object Model (POM)
+
+```python
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+class BasePage:
+    def __init__(self, driver):
+        self.driver = driver
+        self.wait = WebDriverWait(driver, 10)
+    
+    def find_element(self, locator):
+        return self.wait.until(EC.presence_of_element_located(locator))
+    
+    def click(self, locator):
+        element = self.wait.until(EC.element_to_be_clickable(locator))
+        element.click()
+    
+    def send_keys(self, locator, text):
+        element = self.find_element(locator)
+        element.clear()
+        element.send_keys(text)
+
+class LoginPage(BasePage):
+    USERNAME_INPUT = (By.ID, 'username')
+    PASSWORD_INPUT = (By.ID, 'password')
+    LOGIN_BUTTON = (By.ID, 'login')
+    
+    def login(self, username, password):
+        self.send_keys(self.USERNAME_INPUT, username)
+        self.send_keys(self.PASSWORD_INPUT, password)
+        self.click(self.LOGIN_BUTTON)
+        return HomePage(self.driver)
+
+class HomePage(BasePage):
+    WELCOME_MESSAGE = (By.CLASS_NAME, 'welcome')
+    
+    def get_welcome_message(self):
+        return self.find_element(self.WELCOME_MESSAGE).text
+
+# Usage
+driver = webdriver.Chrome()
+driver.get('https://example.com/login')
+
+login_page = LoginPage(driver)
+home_page = login_page.login('user', 'pass')
+print(home_page.get_welcome_message())
+```
+
+### Retry Decorator
+
+```python
+import time
+from functools import wraps
+
+def retry(max_attempts=3, delay=1):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            attempts = 0
+            while attempts < max_attempts:
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    attempts += 1
+                    if attempts >= max_attempts:
+                        raise e
+                    time.sleep(delay)
+        return wrapper
+    return decorator
+
+@retry(max_attempts=3, delay=2)
+def click_element(driver, locator):
+    element = driver.find_element(*locator)
+    element.click()
+```
+
+### Context Manager for WebDriver
+
+```python
+from contextlib import contextmanager
+
+@contextmanager
+def selenium_driver(browser='chrome', headless=False):
+    options = Options()
+    if headless:
+        options.add_argument('--headless')
+    
+    driver = webdriver.Chrome(options=options)
+    
+    try:
+        yield driver
+    finally:
+        driver.quit()
+
+# Usage
+with selenium_driver(headless=True) as driver:
+    driver.get('https://example.com')
+    print(driver.title)
+# Driver automatically quits
+```
+
+### Screenshot on Exception
+
+```python
+import os
+from datetime import datetime
+
+def screenshot_on_failure(driver, test_name='test'):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                filename = f"{test_name}_{timestamp}.png"
+                driver.save_screenshot(filename)
+                print(f"Screenshot saved: {filename}")
+                raise e
+        return wrapper
+    return decorator
+
+@screenshot_on_failure(driver, 'login_test')
+def test_login(driver):
+    driver.get('https://example.com')
+    driver.find_element(By.ID, 'nonexistent').click()
+```
+
+### Wait for AJAX/jQuery
+
+```python
+def wait_for_ajax(driver, timeout=10):
+    wait = WebDriverWait(driver, timeout)
+    wait.until(lambda d: d.execute_script('return jQuery.active == 0'))
+    wait.until(lambda d: d.execute_script('return document.readyState') == 'complete')
+
+def wait_for_angular(driver, timeout=10):
+    script = 'return window.getAllAngularTestabilities().findIndex(x => !x.isStable()) === -1'
+    wait = WebDriverWait(driver, timeout)
+    wait.until(lambda d: d.execute_script(script))
+```
+
+### Scroll to Load More
+
+```python
+def scroll_to_bottom(driver, pause_time=1):
+    last_height = driver.execute_script('return document.body.scrollHeight')
+    
+    while True:
+        driver.execute_script('window.scrollTo(0, document.body.scrollHeight);')
+        time.sleep(pause_time)
+        
+        new_height = driver.execute_script('return document.body.scrollHeight')
+        if new_height == last_height:
+            break
+        last_height = new_height
+
+# Infinite scroll with limit
+def scroll_with_limit(driver, max_scrolls=10, pause_time=1):
+    for i in range(max_scrolls):
+        driver.execute_script('window.scrollTo(0, document.body.scrollHeight);')
+        time.sleep(pause_time)
+```
+
+### Download Files
+
+```python
+import os
+
+# Configure download directory
+chrome_options = Options()
+prefs = {
+    'download.default_directory': os.path.abspath('downloads'),
+    'download.prompt_for_download': False,
+    'download.directory_upgrade': True,
+    'safebrowsing.enabled': True
+}
+chrome_options.add_experimental_option('prefs', prefs)
+
+driver = webdriver.Chrome(options=chrome_options)
+
+# Wait for download to complete
+def wait_for_download(download_dir, timeout=60):
+    seconds = 0
+    while seconds < timeout:
+        time.sleep(1)
+        # Check if .crdownload file exists (Chrome)
+        if not any(fname.endswith('.crdownload') for fname in os.listdir(download_dir)):
+            return True
+        seconds += 1
+    return False
+
+# Trigger download
+driver.get('https://example.com/download-page')
+driver.find_element(By.ID, 'download-button').click()
+wait_for_download('downloads')
+```
+
+### Handle Multiple Elements
+
+```python
+# Click all matching elements
+elements = driver.find_elements(By.CLASS_NAME, 'button')
+for element in elements:
+    try:
+        element.click()
+        time.sleep(0.5)
+    except:
+        continue
+
+# Get all text values
+links = driver.find_elements(By.TAG_NAME, 'a')
+hrefs = [link.get_attribute('href') for link in links]
+
+# Filter elements
+visible_elements = [el for el in elements if el.is_displayed()]
+```
+
+### Switch User Agent
+
+```python
+def create_driver_with_user_agent(user_agent):
+    options = Options()
+    options.add_argument(f'user-agent={user_agent}')
+    return webdriver.Chrome(options=options)
+
+# Mobile user agent
+mobile_ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15'
+driver = create_driver_with_user_agent(mobile_ua)
+
+# Desktop user agent
+desktop_ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+driver = create_driver_with_user_agent(desktop_ua)
+```
+
+### Handle Captcha
+
+```python
+# Manual captcha solving - wait for user
+from selenium.webdriver.support.ui import WebDriverWait
+
+def wait_for_captcha_solve(driver, captcha_element_locator, timeout=300):
+    """Wait for captcha element to disappear"""
+    wait = WebDriverWait(driver, timeout)
+    wait.until_not(EC.presence_of_element_located(captcha_element_locator))
+
+# Pause for manual intervention
+input("Solve the captcha and press Enter to continue...")
+
+# Use captcha solving service (example with 2captcha)
+def solve_recaptcha(driver, site_key, api_key):
+    import requests
+    
+    # Submit captcha to service
+    url = f"http://2captcha.com/in.php?key={api_key}&method=userrecaptcha&googlekey={site_key}&pageurl={driver.current_url}"
+    response = requests.get(url)
+    captcha_id = response.text.split('|')[1]
+    
+    # Wait for solution
+    time.sleep(20)
+    solution_url = f"http://2captcha.com/res.php?key={api_key}&action=get&id={captcha_id}"
+    
+    for _ in range(30):
+        solution = requests.get(solution_url)
+        if 'OK|' in solution.text:
+            captcha_solution = solution.text.split('|')[1]
+            # Inject solution
+            driver.execute_script(f'document.getElementById("g-recaptcha-response").innerHTML="{captcha_solution}";')
+            return True
+        time.sleep(2)
+    return False
+```
+
+### Stealth Mode (Bypass Detection)
+
+```python
+# Using undetected-chromedriver
+import undetected_chromedriver as uc
+
+driver = uc.Chrome()
+driver.get('https://bot-detection-site.com')
+
+# Manual stealth settings
+options = Options()
+options.add_argument('--disable-blink-features=AutomationControlled')
+options.add_experimental_option('excludeSwitches', ['enable-automation'])
+options.add_experimental_option('useAutomationExtension', False)
+
+driver = webdriver.Chrome(options=options)
+
+# Remove webdriver property
+driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+
+# Randomize viewport size
+import random
+width = random.randint(1024, 1920)
+height = random.randint(768, 1080)
+driver.set_window_size(width, height)
+```
+
+### Parallel Execution
+
+```python
+from concurrent.futures import ThreadPoolExecutor
+from selenium import webdriver
+
+def scrape_url(url):
+    driver = webdriver.Chrome()
+    try:
+        driver.get(url)
+        title = driver.title
+        return url, title
+    finally:
+        driver.quit()
+
+urls = ['https://example1.com', 'https://example2.com', 'https://example3.com']
+
+with ThreadPoolExecutor(max_workers=3) as executor:
+    results = executor.map(scrape_url, urls)
+    
+for url, title in results:
+    print(f"{url}: {title}")
+```
+
+---
+
+## Best Practices
+
+### General Best Practices
+
+```python
+# 1. Always use explicit waits over implicit waits or sleep
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+wait = WebDriverWait(driver, 10)
+element = wait.until(EC.presence_of_element_located((By.ID, 'myid')))
+
+# 2. Always close/quit driver
+try:
+    driver.get('https://example.com')
+    # Your code here
+finally:
+    driver.quit()
+
+# 3. Use try-except for error handling
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
+
+try:
+    element = driver.find_element(By.ID, 'optional-element')
+except NoSuchElementException:
+    print("Element not found")
+
+# 4. Avoid hardcoded waits
+# Bad
+time.sleep(5)
+
+# Good
+wait.until(EC.presence_of_element_located((By.ID, 'element')))
+
+# 5. Use Page Object Model for maintainability
+# Separate page logic from test logic
+
+# 6. Use relative locators when possible
+# More robust than absolute XPath
+driver.find_element(By.CSS_SELECTOR, '.class')  # Good
+driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/span[3]')  # Bad
+
+# 7. Reuse driver instance when possible
+# Don't create new driver for each test if not necessary
+
+# 8. Handle stale element references
+from selenium.common.exceptions import StaleElementReferenceException
+
+def safe_click(driver, locator, max_attempts=3):
+    attempts = 0
+    while attempts < max_attempts:
+        try:
+            element = driver.find_element(*locator)
+            element.click()
+            return
+        except StaleElementReferenceException:
+            attempts += 1
+    raise Exception("Element is stale after max attempts")
+
+# 9. Clean up test data
+# Delete cookies, clear cache between tests if needed
+driver.delete_all_cookies()
+
+# 10. Use headless mode for faster execution in CI/CD
+options = Options()
+options.add_argument('--headless')
+driver = webdriver.Chrome(options=options)
+```
+
+### Performance Optimization
+
+```python
+# 1. Disable images for faster loading
+chrome_options = Options()
+prefs = {'profile.managed_default_content_settings.images': 2}
+chrome_options.add_experimental_option('prefs', prefs)
+
+# 2. Set page load strategy
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+
+caps = DesiredCapabilities.CHROME.copy()
+caps['pageLoadStrategy'] = 'eager'  # Don't wait for all resources
+driver = webdriver.Chrome(desired_capabilities=caps)
+
+# 3. Use CSS Selectors over XPath when possible
+# CSS is generally faster
+driver.find_element(By.CSS_SELECTOR, '#id')  # Faster
+driver.find_element(By.XPATH, '//*[@id="id"]')  # Slower
+
+# 4. Minimize element searches
+# Bad - searches twice
+driver.find_element(By.ID, 'button').click()
+text = driver.find_element(By.ID, 'button').text
+
+# Good - store reference
+button = driver.find_element(By.ID, 'button')
+button.click()
+text = button.text
+
+# 5. Use driver.execute_script for bulk operations
+# Faster than clicking multiple elements individually
+driver.execute_script('''
+    const buttons = document.querySelectorAll('.button');
+    buttons.forEach(btn => btn.click());
+''')
+
+# 6. Reuse WebDriverWait objects
+wait = WebDriverWait(driver, 10)  # Create once
+element1 = wait.until(EC.presence_of_element_located((By.ID, 'id1')))
+element2 = wait.until(EC.presence_of_element_located((By.ID, 'id2')))
+```
+
+### Common Exceptions
+
+```python
+from selenium.common.exceptions import (
+    NoSuchElementException,
+    TimeoutException,
+    StaleElementReferenceException,
+    ElementNotInteractableException,
+    ElementClickInterceptedException,
+    NoSuchWindowException,
+    NoAlertPresentException,
+    InvalidSelectorException,
+    WebDriverException
+)
+
+# Handle specific exceptions
+try:
+    element = driver.find_element(By.ID, 'myid')
+    element.click()
+except NoSuchElementException:
+    print("Element not found")
+except ElementNotInteractableException:
+    print("Element not clickable")
+except ElementClickInterceptedException:
+    print("Element click intercepted by another element")
+except TimeoutException:
+    print("Operation timed out")
+except StaleElementReferenceException:
+    print("Element is no longer in DOM")
+except Exception as e:
+    print(f"Unexpected error: {e}")
+```
+
+### Debugging Tips
+
+```python
+# 1. Take screenshots at key points
+driver.save_screenshot('debug.png')
+
+# 2. Print page source
+print(driver.page_source)
+
+# 3. Print current URL
+print(driver.current_url)
+
+# 4. Check element visibility
+element = driver.find_element(By.ID, 'myid')
+print(f"Displayed: {element.is_displayed()}")
+print(f"Enabled: {element.is_enabled()}")
+
+# 5. Get element location and size
+print(f"Location: {element.location}")
+print(f"Size: {element.size}")
+
+# 6. Highlight element for debugging
+def highlight(element):
+    driver.execute_script(
+        "arguments[0].setAttribute('style', 'border: 3px solid red;');",
+        element
+    )
+
+# 7. Slow down execution
+import time
+time.sleep(2)  # Temporary for debugging
+
+# 8. Enable logging
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
+# 9. Check browser logs
+logs = driver.get_log('browser')
+for log in logs:
+    print(log)
+
+# 10. Use breakpoint for step-by-step debugging
+breakpoint()  # Python 3.7+
+```
+
+---
+
+## Common Use Cases
+
+### Login Automation
+
+```python
+def login(driver, username, password):
+    driver.get('https://example.com/login')
+    
+    username_field = driver.find_element(By.ID, 'username')
+    password_field = driver.find_element(By.ID, 'password')
+    submit_button = driver.find_element(By.ID, 'submit')
+    
+    username_field.send_keys(username)
+    password_field.send_keys(password)
+    submit_button.click()
+    
+    # Wait for redirect
+    WebDriverWait(driver, 10).until(
+        EC.url_contains('/dashboard')
+    )
+```
+
+### Form Filling
+
+```python
+def fill_form(driver, form_data):
+    for field_id, value in form_data.items():
+        element = driver.find_element(By.ID, field_id)
+        element.clear()
+        element.send_keys(value)
+    
+    # Submit form
+    driver.find_element(By.ID, 'submit').click()
+
+form_data = {
+    'first_name': 'John',
+    'last_name': 'Doe',
+    'email': 'john@example.com'
+}
+fill_form(driver, form_data)
+```
+
+### Web Scraping
+
+```python
+def scrape_products(driver):
+    driver.get('https://example.com/products')
+    
+    # Wait for products to load
+    wait = WebDriverWait(driver, 10)
+    wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'product')))
+    
+    products = []
+    product_elements = driver.find_elements(By.CLASS_NAME, 'product')
+    
+    for element in product_elements:
+        product = {
+            'name': element.find_element(By.CLASS_NAME, 'name').text,
+            'price': element.find_element(By.CLASS_NAME, 'price').text,
+            'url': element.find_element(By.TAG_NAME, 'a').get_attribute('href')
+        }
+        products.append(product)
+    
+    return products
+```
+
+### Testing Workflow
+
+```python
+import unittest
+
+class TestWebsite(unittest.TestCase):
+    def setUp(self):
+        self.driver = webdriver.Chrome()
+        self.driver.implicitly_wait(10)
+    
+    def tearDown(self):
+        self.driver.quit()
+    
+    def test_login(self):
+        driver = self.driver
+        driver.get('https://example.com/login')
+        
+        driver.find_element(By.ID, 'username').send_keys('testuser')
+        driver.find_element(By.ID, 'password').send_keys('testpass')
+        driver.find_element(By.ID, 'submit').click()
+        
+        self.assertIn('dashboard', driver.current_url)
+    
+    def test_search(self):
+        driver = self.driver
+        driver.get('https://example.com')
+        
+        search_box = driver.find_element(By.NAME, 'q')
+        search_box.send_keys('selenium')
+        search_box.send_keys(Keys.RETURN)
+        
+        results = driver.find_elements(By.CLASS_NAME, 'result')
+        self.assertGreater(len(results), 0)
+
+if __name__ == '__main__':
+    unittest.main()
+```
+
+---
+
+## Quick Reference
+
+### Most Common Operations
+
+```python
+# Setup
+driver = webdriver.Chrome()
+
+# Navigate
+driver.get('https://example.com')
+
+# Find & interact
+element = driver.find_element(By.ID, 'myid')
+element.click()
+element.send_keys('text')
+element.clear()
+
+# Wait
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+wait = WebDriverWait(driver, 10)
+element = wait.until(EC.element_to_be_clickable((By.ID, 'button')))
+
+# Get data
+text = element.text
+value = element.get_attribute('value')
+url = driver.current_url
+
+# Cleanup
+driver.quit()
+```
